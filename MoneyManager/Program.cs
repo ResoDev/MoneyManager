@@ -23,7 +23,6 @@ namespace MoneyManager
         bool AddMoney(float inMoney);
         bool DrawMoney(float inMoney);
         float GetBalance();
-        string ValidateName(string inName);
         bool SetName(string inName);
         string GetName();
     }
@@ -72,27 +71,9 @@ namespace MoneyManager
             return this.money;
         }
 
-        public string ValidateName(string inName)
-        {
-            string result = "";
-
-            if (inName == null)
-                result = "Name not set (null).";
-            string trimmedName = inName.Trim();
-            if (trimmedName.Length == 0)
-                result = "No text in name.";
-
-            return result;
-        }
-
         public bool SetName(string inName)
         {
-            string result;
-            result = ValidateName(inName);
-
-            if (result.Length > 0)
-                return false;
-
+            ValidateName(inName);
             this.name = inName;
             return true;
         }
@@ -100,6 +81,16 @@ namespace MoneyManager
         public string GetName()
         {
             return this.name;
+        }
+
+        //PRIVATE SECTION
+        private void ValidateName(string inName)
+        {
+            if (inName == null)
+                throw new BankException("Invalid name: Name set to null");
+            string trimmedName = inName.Trim();
+            if (trimmedName.Length == 0)
+                throw new BankException("Invalid name: No text in name");
         }
     }
 
@@ -164,21 +155,25 @@ namespace MoneyManager
         public void EditName()
         {
             string newName;
-            string reply;
             Console.WriteLine("Editing name");
 
             while (true)
             {
                 Console.Write("Please, enter new name: ");
                 newName = Console.ReadLine();
-                reply = this.account.ValidateName(newName);
 
-                if (reply.Length == 0)
-                    break;
-
-                Console.WriteLine(reply);
+                try
+                {
+                    this.account.SetName(newName);
+                }
+                catch(BankException bankE)
+                {
+                    Console.WriteLine("ERROR: " + bankE.Message);
+                    continue;
+                }
+                //when no exception is thrown, jumping out of the while loop
+                break;
             }
-            this.account.SetName(newName);
         }
 
         public void EditMoney()
@@ -265,5 +260,10 @@ namespace MoneyManager
         {
             Console.WriteLine(this.account);
         }
+    }
+
+    class BankException : Exception
+    {
+        public BankException (string message) : base(message) { }
     }
 }
